@@ -3,11 +3,30 @@ from abc import ABC, abstractmethod
 
 
 class Task:
-    def __init__(self, task_id, description, due_date=None, completed=False):
+    VALID_PRIORITIES = ("low", "medium", "high")
+
+    def __init__(
+        self,
+        task_id,
+        description,
+        due_date=None,
+        completed=False,
+        priority="medium",
+    ):
         self.id = task_id
         self.description = description
         self.due_date = due_date
         self.completed = completed
+        self.priority = self._validate_priority(priority)
+
+    @classmethod
+    def _validate_priority(cls, priority):
+        """คืนค่า priority ที่ถูกต้อง ถ้าไม่อยู่ในลิสต์ให้ fallback เป็น medium."""
+        normalized = str(priority).lower()
+        if normalized not in cls.VALID_PRIORITIES:
+            print(f"Unknown priority '{priority}', falling back to 'medium'.")
+            return "medium"
+        return normalized
 
     def mark_completed(self):
         self.completed = True
@@ -16,7 +35,10 @@ class Task:
     def __str__(self):
         status = "✓" if self.completed else " "
         due = f" (Due: {self.due_date})" if self.due_date else ""
-        return f"[{status}] {self.id}. {self.description}{due}"
+        return (
+            f"[{status}] {self.id}. {self.description}"
+            f"{due} [Priority: {self.priority}]"
+        )
 
 
 class TaskStorage(ABC):
@@ -41,13 +63,20 @@ class FileTaskStorage(TaskStorage):
             with open(self.filename, "r", encoding="utf-8") as f:
                 for line in f:
                     parts = line.strip().split(",")
-                    if len(parts) == 4:
+                    if len(parts) >= 4:
                         task_id = int(parts[0])
                         description = parts[1]
                         due_date = parts[2] if parts[2] != "None" else None
                         completed = parts[3] == "True"
+                        priority = parts[4] if len(parts) > 4 else "medium"
                         loaded_tasks.append(
-                            Task(task_id, description, due_date, completed)
+                            Task(
+                                task_id,
+                                description,
+                                due_date,
+                                completed,
+                                priority,
+                            )
                         )
         except FileNotFoundError:
             print(f"No existing task file '{self.filename}' found. Starting fresh.")
@@ -71,8 +100,8 @@ class TaskManager:
         self.next_id = max([t.id for t in self.tasks] + [0]) + 1
         print(f"Loaded {len(self.tasks)} tasks. Next ID: {self.next_id}")
 
-    def add_task(self, description, due_date=None):
-        task = Task(self.next_id, description, due_date)
+    def add_task(self, description, due_date=None, priority="medium"):
+        task = Task(self.next_id, description, due_date, priority=priority)
         self.tasks.append(task)
         self.next_id += 1
         self.storage.save_tasks(self.tasks)  # Save after adding
@@ -109,8 +138,9 @@ if __name__ == "__main__":
     manager = TaskManager(file_storage)  # ฉีด FileTaskStorage เข้าไป
 
     manager.list_tasks()
-    manager.add_task("Review SOLID Principles", "2024-08-10")
-    manager.add_task("Prepare for Final Exam", "2024-08-15")
+    manager.add_task("Review SOLID Principles", "2024-08-10", "high")
+    manager.add_task("Prepare for Final Exam", "2024-08-15", "low")
+    manager.add_task("Read lecture notes")  # ใช้ priority ค่าเริ่มต้น
     manager.list_tasks()
     manager.mark_task_completed(1)
     manager.list_tasks()
