@@ -20,6 +20,15 @@ python oop_tasks.py
 python srp_tasks.py
 ```
 
+> **หมายเหตุ (Windows):** โปรแกรมพิมพ์เครื่องหมาย `✓` ถ้า Command Prompt ใช้ code page
+> ที่ไม่ใช่ UTF-8 อาจเจอ `UnicodeEncodeError` แก้ได้ด้วย `set PYTHONIOENCODING=utf-8`
+> ก่อนรัน หรือสั่ง `chcp 65001`
+
+## ฟีเจอร์ priority
+
+`Task` มี attribute `priority` (`low` / `medium` / `high`, ค่าเริ่มต้น `medium`)
+เพิ่มเข้ามาผ่าน Pull Request #1 พร้อมการทำ Self-Review และผ่าน CI ก่อน merge
+
 ## สรุปแนวคิด
 
 1. **Procedural → OOP**: ย้ายจาก global data มาเป็น attribute ของ object ลดปัญหาข้อมูลถูกแก้จากทุกที่
